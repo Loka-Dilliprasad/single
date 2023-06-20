@@ -1,32 +1,61 @@
-angular.module('ShoppingListApp', [])
-  .controller('ShoppingListController', ShoppingListController);
+var app = angular.module('restaurantApp', []);
 
-ShoppingListController.$inject = ['$scope'];
+app.config(function($routeProvider) {
+  $routeProvider
+    .when('/', {
+      template: '',
+      controller: 'HomeController'
+    })
+    .when('/categories', {
+      template: '',
+      controller: 'CategoriesController'
+    })
+    .when('/items/:categoryId', {
+      template: '',
+      controller: 'ItemsController'
+    })
+    .otherwise({
+      redirectTo: '/'
+    });
+});
 
-function ShoppingListController($scope) {
-  var vm = this;
+app.controller('HomeController', function($scope) {
+  $scope.showCategories = true;
+  $scope.showItems = false;
+});
 
-  vm.toBuyList = [
-    { name: 'Cookies', quantity: 10 },
-    { name: 'Milk', quantity: 2 },
-    { name: 'Bread', quantity: 3 },
-    { name: 'Eggs', quantity: 6 },
-    { name: 'Apples', quantity: 5 }
-  ];
+app.controller('CategoriesController', function($scope, $http) {
+  $http.get('API_URL/categories')
+    .then(function(response) {
+      $scope.categories = response.data;
+    })
+    .catch(function(error) {
+      console.error('Error fetching categories:', error);
+    });
 
-  vm.alreadyBoughtList = [];
+  $scope.showCategories = true;
+  $scope.showItems = false;
+});
 
-  vm.buyItem = function(index) {
-    var item = vm.toBuyList[index];
-    vm.toBuyList.splice(index, 1);
-    vm.alreadyBoughtList.push(item);
-  };
+app.controller('ItemsController', function($scope, $http, $routeParams) {
+  var categoryId = $routeParams.categoryId;
 
-  vm.isToBuyListEmpty = function() {
-    return vm.toBuyList.length === 0;
-  };
+  $http.get('API_URL/items?categoryId=' + categoryId)
+    .then(function(response) {
+      $scope.items = response.data;
+    })
+    .catch(function(error) {
+      console.error('Error fetching items:', error);
+    });
 
-  vm.isAlreadyBoughtListEmpty = function() {
-    return vm.alreadyBoughtList.length === 0;
-  };
-}
+  $http.get('API_URL/categories/' + categoryId)
+    .then(function(response) {
+      $scope.selectedCategory = response.data;
+    })
+    .catch(function(error) {
+      console.error('Error fetching category:', error);
+    });
+
+  $scope.showCategories = false;
+  $scope.showItems = true;
+});
